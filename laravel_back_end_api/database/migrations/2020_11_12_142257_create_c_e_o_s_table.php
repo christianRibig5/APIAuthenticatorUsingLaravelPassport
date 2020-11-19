@@ -13,7 +13,7 @@ class CreateCeosTable extends Migration
      */
     public function up()
     {
-        Schema::create('ceos', function (Blueprint $table) {
+        Schema::create('c_e_o_s', function (Blueprint $table) {
             $table->bigIncrements('id');
             $table->unsignedBigInteger('user_id');
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
@@ -32,6 +32,6 @@ class CreateCeosTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('ceos');
+        Schema::dropIfExists('c_e_o_s');
     }
 }

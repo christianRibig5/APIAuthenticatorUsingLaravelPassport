@@ -6,6 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Models\CEO;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use App\Http\Resources\CEOResource;
+use App\APIResponseModels\SysAPIResponse;
+use App\Http\Resources\CEOCollection;
 
 class CEOController extends Controller
 {
@@ -14,7 +17,8 @@ class CEOController extends Controller
     public function index()
     {
         $ceos = CEO::all();
-        return response([ 'ceos' => CEOResource::collection($ceos), 'message' => 'Retrieved successfully'], 200);
+        $response=new SysAPIResponse(SysAPIResponse::$SUCCESS,'Retrieved Successfully!',new CEOCollection($ceos));
+        return response()->json($response);
     }
 
    
@@ -26,22 +30,26 @@ class CEOController extends Controller
             'user_id' => 'required|max:255|exists:users,id',
             'year' => 'required|max:255',
             'company_headquarters' => 'required|max:255',
-            'what_company_does' => 'required'
+            'what_company_does' => 'required',
+            'company_name'=>'required',
         ]);
 
         if($validator->fails()){
-            return response(['error' => $validator->errors(), 'Validation Error']);
+            $response= new SysAPIResponse(SysAPIResponse::$ERROR,'Invalid Credentials  Supplied',$validation->errors());
+            return response()->json($response);
         }
 
         $ceo = CEO::create($data);
 
-        return response([ 'ceo' => new CEOResource($ceo), 'message' => 'Created successfully'], 200);
+        $response=new SysAPIResponse(SysAPIResponse::$SUCCESS,'Retrieved Successfully!',new CEOResource($ceo));
+        return response()->json($response);
     }
 
     
     public function show(CEO $ceo)
     {
-        return response([ 'ceo' => new CEOResource($ceo), 'message' => 'Retrieved successfully'], 200);
+        $response=new SysAPIResponse(SysAPIResponse::$SUCCESS,'Retrieved Successfully!',new CEOResource($ceo));
+        return response()->json($response);
 
     }
 
@@ -51,7 +59,8 @@ class CEOController extends Controller
 
         $ceo->update($request->all());
 
-        return response([ 'ceo' => new CEOResource($ceo), 'message' => 'Retrieved successfully'], 200);
+        $response=new SysAPIResponse(SysAPIResponse::$SUCCESS,'Retrieved Successfully!',new CEOResource($ceo));
+        return response()->json($response);
     }
 
     

@@ -6,7 +6,10 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Role;
 use App\Models\User;
-use App\Models\CEO;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Validator;
+use App\APIResponseModels\AuthAPIResponse;
+use App\Http\Resources\UserResource;
 
 class AuthController extends Controller
 {
@@ -17,26 +20,27 @@ class AuthController extends Controller
             'lastname'=> 'required|max:55',
             'email' => 'email|required|unique:users',
             'password'=> 'required|confirmed',
-            'role_name'=>'required|unique:roles',
+            'role_name'=>'required',
         ]);
-        if($validation->fails()){
+        if($validator->fails()){
            
-            return response()->json([ 'Error' => 'invalid data supplied', 'response_code' => 400]);
+            return response()->json([ 'Error' => $validator->errors(), 'response_code' => 400]);
         }
 
         $firstName=$request->firstname;
         $lastName=$request->lastname;
         $role=$request->role_name;
-        $roleName=strtolower($role);
         $email=$request->email;
         $hashedPassword = Hash::make($request->password);
-        $roleId=$this->getTheUserRoleIDFromTheSuppliedRoleName($roleName);
+        $roleId=$this->getTheUserRoleIDFromTheSuppliedRoleName(strtolower($role));
         $uniqueIdRef=$this->getTheGeneratedUniqueIDForTheCurrentUser();
         $user =$this->createUser($uniqueIdRef,$firstName,$lastName,$email,$hashedPassword,$roleId);
         $accessToken = $user->createToken('authToken')->accessToken;
-        return response([ 'user' => $user, 'access_token' => $accessToken]);
+
+       $response= new AuthAPIResponse(AuthAPIResponse::$SUCCESS,'Success!',new UserResource(auth()->user()),$accessToken);
+        return response()->json($response);
     }
-    private function getTheUserRoleIDFromTheSuppliedRoleName($roleName){
+    private function getTheUserRoleIDFromTheSuppliedRoleName($name){
         $role=Role::where('role_name',$name)->first();
         return $role->id;
     }
@@ -63,12 +67,14 @@ class AuthController extends Controller
         ]);
 
         if (!auth()->attempt($loginData)) {
-            return response(['message' => 'Invalid Credentials']);
+            $response= new AuthAPIResponse(CabAPIResponse::$ERROR,'Invalid Credentials  Supplied', null, null);
+            return response()->json($response);
         }
 
         $accessToken = auth()->user()->createToken('authToken')->accessToken;
 
-        return response(['user' => auth()->user(), 'access_token' => $accessToken]);
+        $response= new AuthAPIResponse(AuthAPIResponse::$SUCCESS,'Success!',new UserResource(auth()->user()),$accessToken);
+        return response()->json($response);
 
     }
 }
